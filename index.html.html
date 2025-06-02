@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tính tiền còn lại</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Tính tiền còn lại</h2>
+    <label>Nhập số tiền đã chi:</label><br>
+    <input type="number" id="chiTieu" style="width: 100%; padding: 10px; font-size: 16px;" /><br><br>
+
+    <label>Ghi chú (tuỳ chọn):</label><br>
+    <input type="text" id="ghiChu" placeholder="Ví dụ: Mua đồ ăn, đổ xăng..." style="width: 100%; padding: 10px; font-size: 16px;" /><br><br>
+
+    <button onclick="tinhTien()" style="padding: 10px 20px; font-size: 16px;">Tính</button>
+    <button onclick="khoiPhuc()" style="padding: 10px 20px; font-size: 16px; background-color: #f44336; color: white; margin-left: 10px;">Khôi phục</button>
+
+    <p id="ketQua" style="margin-top: 20px; font-weight: bold;"></p>
+
+    <h3>Lịch sử chi tiêu:</h3>
+    <ul id="lichSuChiTieu" style="padding-left: 20px;"></ul>
+
+    <script>
+        function init() {
+            let conLai = localStorage.getItem("soTienConLai");
+            if (conLai === null) {
+                conLai = 3000000;
+                localStorage.setItem("soTienConLai", conLai);
+            }
+            document.getElementById("ketQua").innerText =
+                "Số tiền còn lại: " + parseInt(conLai).toLocaleString('vi-VN') + " VNĐ";
+            hienThiLichSu();
+        }
+
+        function hienThiLichSu() {
+            let lichSu = JSON.parse(localStorage.getItem("lichSuChiTieu")) || [];
+            let danhSach = document.getElementById("lichSuChiTieu");
+            danhSach.innerHTML = "";
+            lichSu.forEach((muc) => {
+                const li = document.createElement("li");
+                const noteText = muc.note ? ` (${muc.note})` : "";
+                li.innerText = `${muc.time} - Đã chi: ${parseInt(muc.amount).toLocaleString('vi-VN')} VNĐ${noteText}`;
+                danhSach.appendChild(li);
+            });
+        }
+
+        function tinhTien() {
+            const daChi = parseInt(document.getElementById("chiTieu").value);
+            const ghiChu = document.getElementById("ghiChu").value.trim();
+            if (isNaN(daChi)) {
+                document.getElementById("ketQua").innerText = "Vui lòng nhập số tiền hợp lệ.";
+            } else {
+                let conLai = parseInt(localStorage.getItem("soTienConLai")) - daChi;
+                localStorage.setItem("soTienConLai", conLai);
+
+                let lichSu = JSON.parse(localStorage.getItem("lichSuChiTieu")) || [];
+                const now = new Date();
+                const timeStr = now.toLocaleString('vi-VN');
+                lichSu.push({ time: timeStr, amount: daChi, note: ghiChu });
+                localStorage.setItem("lichSuChiTieu", JSON.stringify(lichSu));
+
+                document.getElementById("ketQua").innerText =
+                    "Số tiền còn lại: " + conLai.toLocaleString('vi-VN') + " VNĐ";
+                document.getElementById("chiTieu").value = "";
+                document.getElementById("ghiChu").value = "";
+                hienThiLichSu();
+            }
+        }
+
+        function khoiPhuc() {
+            if (confirm("Bạn có chắc chắn muốn khôi phục về 3.000.000 VNĐ và xóa toàn bộ lịch sử?")) {
+                localStorage.setItem("soTienConLai", 3000000);
+                localStorage.removeItem("lichSuChiTieu");
+                init();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
